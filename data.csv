@@ -1,0 +1,78 @@
+MLOps OHLCV Signal Pipeline
+A minimal MLOps-style batch job that computes a rolling-mean-based binary trading signal on OHLCV close prices.  
+Designed for reproducibility, observability, and Docker-first deployment.
+---
+Project Structure
+```
+.
+├── run.py            # Main pipeline script
+├── config.yaml       # Runtime configuration (seed, window, version)
+├── data.csv          # Input OHLCV dataset (10,000 rows)
+├── requirements.txt  # Python dependencies
+├── Dockerfile        # Container definition
+├── metrics.json      # Sample output from a successful run
+├── run.log           # Sample log from a successful run
+└── README.md
+```
+---
+Local Run
+Prerequisites
+```bash
+pip install -r requirements.txt
+```
+Run
+```bash
+python run.py \\
+  --input    data.csv \\
+  --config   config.yaml \\
+  --output   metrics.json \\
+  --log-file run.log
+```
+All four flags are required — no hardcoded paths.  
+On success, the final metrics JSON is printed to stdout and written to `metrics.json`.  
+Detailed logs are written to `run.log`.
+---
+Docker Build & Run
+```bash
+docker build -t mlops-task .
+docker run --rm mlops-task
+```
+The container bundles `data.csv` and `config.yaml`, runs the pipeline, prints metrics JSON to stdout, and exits `0` on success / non-zero on failure.
+---
+Configuration (`config.yaml`)
+Key	Type	Description
+`seed`	int	NumPy random seed for reproducibility
+`window`	int	Rolling mean window size
+`version`	string	Pipeline version tag in output metrics
+---
+Pipeline Logic
+Load & validate config — checks required keys and types; sets `numpy.random.seed`.
+Load & validate dataset — handles missing file, bad CSV, empty file, missing `close` column.
+Rolling mean — computed with `min\_periods=window`; the first `window-1` rows yield `NaN` and are excluded from signal computation.
+Signal — `signal = 1` if `close > rolling\_mean`, else `0`.
+Metrics + timing — writes `metrics.json`; also written on error with `status: "error"`.
+---
+Example `metrics.json`
+```json
+{
+  "version": "v1",
+  "rows\_processed": 9996,
+  "metric": "signal\_rate",
+  "value": 0.4991,
+  "latency\_ms": 18,
+  "seed": 42,
+  "status": "success"
+}
+```
+> `rows\_processed` is 9996 (not 10000) because the first 4 rows are excluded during the window warm-up phase (`window=5`).
+---
+Error Output
+If anything goes wrong (bad config, missing column, unreadable file, etc.), `metrics.json` is still written:
+```json
+{
+  "version": "v1",
+  "status": "error",
+  "error\_message": "Required column 'close' not found. Columns present: \['open', 'high']"
+}
+```
+Exit code will be non-zero.
