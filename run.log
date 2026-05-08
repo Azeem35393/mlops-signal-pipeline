@@ -1,0 +1,13 @@
+2026-05-08T11:01:12 [INFO] === Job started ===
+2026-05-08T11:01:12 [INFO] Input: data.csv | Config: config.yaml | Output: metrics.json
+2026-05-08T11:01:12 [INFO] Loading and validating config...
+2026-05-08T11:01:12 [INFO] Config loaded — seed=42, window=5, version=v1
+2026-05-08T11:01:12 [INFO] Random seed set: 42
+2026-05-08T11:01:12 [INFO] Loading dataset from data.csv...
+2026-05-08T11:01:12 [INFO] Dataset loaded: 10000 rows, columns: ['open', 'high', 'low', 'close', 'volume']
+2026-05-08T11:01:12 [INFO] Computing rolling mean on 'close' with window=5...
+2026-05-08T11:01:12 [INFO] Rolling mean computed. First 4 rows excluded (NaN) due to window warm-up.
+2026-05-08T11:01:12 [INFO] Generating binary signal (close > rolling_mean)...
+2026-05-08T11:01:12 [INFO] Signal generated. rows_processed=9996, signal_rate=0.4991
+2026-05-08T11:01:12 [INFO] Metrics written to metrics.json: {'version': 'v1', 'rows_processed': 9996, 'metric': 'signal_rate', 'value': 0.4991, 'latency_ms': 18, 'seed': 42, 'status': 'success'}
+2026-05-08T11:01:12 [INFO] === Job completed successfully in 18ms ===
